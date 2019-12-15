@@ -43,6 +43,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['total_questions'])
         self.assertTrue(len(data['questions']))
 
+    def test_get_paginated_questions(self):
+        res = self.client().get('/questions?page=2')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['total_questions'])
+        self.assertTrue(len(data['questions']))
+
     def test_get_categories(self):
         res = self.client().get('/categories')
         data = json.loads(res.data)
@@ -64,21 +72,19 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertEqual(data['message'], 'Question created')
 
-    # def test_delete_question(self):
-    #     res = self.client().delete('/questions/4')
-    #     data = json.loads(res.data)
-    #     question = Question.query.filter(Question.id == 1).one_or_none()
+    def test_delete_question(self):
+        res = self.client().delete('/questions/29')
+        data = json.loads(res.data)
+        question = Question.query.filter(Question.id == 1).one_or_none()
 
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data['success'], True)
-    #     self.assertEqual(data['deleted'], 4)
-    #     self.assertTrue(data['total_questions'])
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['deleted'], 29)
 
     def test_search_questions(self):
         payload = {'searchTerm': 'What'}
         res = self.client().post('/questions/search', json=payload)
         data = json.loads(res.data)
-        print
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['total_questions'])
@@ -125,6 +131,22 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 422)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'Unprocessable Entity')
+
+    def test_404_get_paginated_questions_beyond_valid_page(self):
+        res = self.client().get('/questions?page=1000')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'Resource not found')
+
+    def test_404_delete_question(self):
+        res = self.client().delete('/questions/29')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'Resource not found')
+
 
 # dropdb trivia_test && createdb trivia_test
 # psql trivia_test < trivia.psql && python test_flaskr.py
